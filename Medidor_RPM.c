@@ -15,7 +15,7 @@ float rpm_line(float t){
 void setup()
 {
   Serial.begin(9600);
-  pinMode(pin, INPUT);A
+  pinMode(pin, INPUT);
 }
 
 void loop()
