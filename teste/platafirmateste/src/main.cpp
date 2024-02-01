@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include <freertos\FreeRTOS.h>
+#include <freertos/FreeRTOS.h>
 
-#define pin 2
+constexpr int pin = GPIO_NUM_2;
 
 // Variables modified by ISR
 volatile unsigned long current_duration;
