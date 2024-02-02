@@ -1,4 +1,0 @@
-[wokwi]
-version = 1
-firmware = 'platafirmateste/.pio/build/esp32dev/firmware.bin'
-elf = 'platafirmateste\.pio\build\esp32dev\firmware.elf'
