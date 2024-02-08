@@ -8,12 +8,20 @@ void debug_motor(void *parameters)
 	const float v = 0.02442;
 	while (1)
 	{
-		digitalWrite(motorRPMPin, HIGH);
 		pot = analogRead(4);
-		float p = ((1 / (pot * v)) / 2) * 1000;
-		vTaskDelay(p / portTICK_PERIOD_MS);
-		digitalWrite(motorRPMPin, LOW);
-		vTaskDelay(p / portTICK_PERIOD_MS);
+		float p;
+		if(pot == 0){
+			p = 0;
+		}else{
+			p = ((1 / (pot * v)) / 2) * 1000;
+		}
+
+		if(p != 0){
+			digitalWrite(motorRPMPin, HIGH);
+			vTaskDelay(p / portTICK_PERIOD_MS);
+			digitalWrite(motorRPMPin, LOW);
+			vTaskDelay(p / portTICK_PERIOD_MS);
+		}
 	}
 
 	vTaskDelete(NULL);

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <freertos\FreeRTOS.h>
+#include <cmath>
 
 extern const int motorRPMPin;
 

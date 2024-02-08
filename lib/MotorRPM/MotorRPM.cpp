@@ -15,6 +15,9 @@ SemaphoreHandle_t sharedDataMutexHandle;
 float frequencyToRPM(float signalFrequency){
 	constexpr float angularCoefficient = 15.179f;
 	constexpr float linearCoefficient = -19.65f;
+
+	if(signalFrequency <= 0) return 0;
+
 	return angularCoefficient * signalFrequency + linearCoefficient;
 }
 
@@ -43,7 +46,13 @@ void calculateAverageFrequency(void *parameters){
 		xSemaphoreGive(sharedDataMutexHandle);
 
 		float period = (float)totalSum / totalMeasures;
-		float frequency = 1 / (period / 1000000);
+		float frequency;
+
+		if(isnan(period)){
+			frequency = 0;
+		}else{
+			frequency = 1 / (period / 1000000);
+		}
 
 		xQueueSend(averageMailbox, (void *)&frequency, portMAX_DELAY);
 	}
