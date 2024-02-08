@@ -93,6 +93,6 @@ void MotorRPMInitialize()
 	averageMailbox = xQueueCreate(1, sizeof(float));
 	sharedDataMutexHandle = xSemaphoreCreateMutex();
 	attachInterrupt(motorRPMPin, calculateFrequencyISR, RISING);
-	xTaskCreate(calculateAverageFrequency, "Calculate-Average", 2000, NULL, 1, &calculateAverageFrequencyTaskHandle);
-	xTaskCreate(PrintValuesOnSerial, "Show-Display", 1000, NULL, 1, NULL);
+	xTaskCreate(calculateAverageFrequency, "Calculate-Average", 860, NULL, 1, &calculateAverageFrequencyTaskHandle);
+	xTaskCreate(PrintValuesOnSerial, "Show-Display", 1024, NULL, 1, NULL);
 }
