@@ -2,7 +2,8 @@
 #include <freertos\FreeRTOS.h>
 #include <cmath>
 
-extern const int motorRPMPin;
+extern const int motorRPMLeftPin;
+extern const int motorRPMRightPin;
 
 float frequencyToRPM(float t); // Calculates rpm with formula
 void calculateFrequencyISR(); // ISR function 

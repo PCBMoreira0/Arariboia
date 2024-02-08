@@ -1,14 +1,24 @@
 #include <MotorRPM.h>
 
-constexpr int motorRPMPin = GPIO_NUM_2;
+constexpr int motorRPMLeftPin = GPIO_NUM_4;
+constexpr int motorRPMRightPin = GPIO_NUM_2;
+
 
 // Variables modified by ISR
-volatile unsigned long lastTimeMeasured;
-volatile unsigned long totalTimeSum;
-volatile int totalMeasuresMade = 0;
+// Right Motor
+volatile unsigned long lastTimeMeasuredRight;
+volatile unsigned long totalTimeSumRight;
+volatile int totalMeasuresMadeRight = 0;
+
+// Left Motor
+volatile unsigned long lastTimeMeasuredLeft;
+volatile unsigned long totalTimeSumLeft;
+volatile int totalMeasuresMadeLeft = 0;
 
 // Variables to comunication between tasks
-QueueHandle_t averageMailbox;
+QueueHandle_t averageMailboxRight;
+QueueHandle_t averageMailboxLeft;
+
 TaskHandle_t calculateAverageFrequencyTaskHandle;
 SemaphoreHandle_t sharedDataMutexHandle;
 
@@ -21,14 +31,31 @@ float frequencyToRPM(float signalFrequency){
 	return angularCoefficient * signalFrequency + linearCoefficient;
 }
 
-IRAM_ATTR void calculateFrequencyISR(){
+IRAM_ATTR void calculateFrequencyRightISR(){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	unsigned long currentTime = micros();
 	xSemaphoreTakeFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
-	totalTimeSum += currentTime - lastTimeMeasured;
-	lastTimeMeasured = currentTime;
-	totalMeasuresMade++;
+
+	totalTimeSumRight += currentTime - lastTimeMeasuredRight;
+	lastTimeMeasuredRight = currentTime;
+	totalMeasuresMadeRight++;
+
+	xSemaphoreGiveFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
+
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}
+
+IRAM_ATTR void calculateFrequencyLeftISR(){
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+	unsigned long currentTime = micros();
+	xSemaphoreTakeFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
+
+	totalTimeSumLeft += currentTime - lastTimeMeasuredLeft;
+	lastTimeMeasuredLeft = currentTime;
+	totalMeasuresMadeLeft++;
+
 	xSemaphoreGiveFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
 
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -38,23 +65,41 @@ void calculateAverageFrequency(void *parameters){
 	while (1)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		int totalSum = totalTimeSum;
-		int totalMeasures = totalMeasuresMade;
+		int totalSumRight = totalTimeSumRight;
+		int totalSumLeft = totalTimeSumLeft;
+
+		int totalMeasuresRight = totalMeasuresMadeRight;
+		int totalMeasureLeft = totalMeasuresMadeLeft;
+
 		xSemaphoreTake(sharedDataMutexHandle, portMAX_DELAY);
-		totalTimeSum = 0;
-		totalMeasuresMade = 0;
+		totalTimeSumRight = 0;
+		totalTimeSumLeft = 0;
+		totalMeasuresMadeRight = 0;
+		totalMeasuresMadeLeft = 0;
 		xSemaphoreGive(sharedDataMutexHandle);
 
-		float period = (float)totalSum / totalMeasures;
-		float frequency;
+		// Right
+		float periodRight = (float)totalSumRight / totalMeasuresRight;
+		float frequencyRight;
 
-		if(isnan(period)){
-			frequency = 0;
+		if(isnan(periodRight)){
+			frequencyRight = 0;
 		}else{
-			frequency = 1 / (period / 1000000);
+			frequencyRight = 1 / (periodRight / 1000000);
 		}
 
-		xQueueSend(averageMailbox, (void *)&frequency, portMAX_DELAY);
+		// Left
+		float periodLeft = (float)totalSumLeft / totalMeasureLeft;
+		float frequencyLeft;
+
+		if(isnan(periodLeft)){
+			frequencyLeft = 0;
+		}else{
+			frequencyLeft = 1 / (periodLeft / 1000000);
+		}
+
+		xQueueSend(averageMailboxRight, (void *)&frequencyRight, portMAX_DELAY);
+		xQueueSend(averageMailboxLeft, (void *)&frequencyLeft, portMAX_DELAY);
 	}
 
 	vTaskDelete(NULL);
@@ -66,18 +111,27 @@ void PrintValuesOnSerial(void *parameters){
 	while (1)
 	{
 		xTaskNotifyGive(calculateAverageFrequencyTaskHandle);
-		float frequency;
-		if (xQueueReceive(averageMailbox, (void *)&frequency, portMAX_DELAY))
+		float frequencyRight;
+		float frequencyLeft;
+		if (xQueueReceive(averageMailboxRight, (void *)&frequencyRight, portMAX_DELAY) && xQueueReceive(averageMailboxLeft, (void *)&frequencyLeft, portMAX_DELAY))
 		{
-			int rpm = frequencyToRPM(frequency);
+			int rpmRight = frequencyToRPM(frequencyRight);
+			int rpmLeft = frequencyToRPM(frequencyLeft);
 
-			// Serial.printf("Frequency: %f   RPM: %d\n", frequency, rpm);
+			// Serial.printf("Frequency L: %f   RPM L: %d\n", frequencyLeft, rpmLeft);
+			// Serial.printf("Frequency R: %f   RPM R: %d\n", frequencyRight, rpmRight);
 
 			// Comment this if you are not using Wokwi
-			Serial.print("Frequency: ");
-			Serial.print(frequency);
-			Serial.print("   RPM: ");
-			Serial.print(rpm);
+			Serial.print("Frequency L: ");
+			Serial.print(frequencyLeft);
+			Serial.print("   RPM L: ");
+			Serial.print(rpmLeft);
+			Serial.println();
+			Serial.print("Frequency R: ");
+			Serial.print(frequencyRight);
+			Serial.print("   RPM R: ");
+			Serial.print(rpmRight);
+			Serial.println();
 			Serial.println();
 
 			vTaskDelay(pdMS_TO_TICKS(printDelay_ms));
@@ -89,10 +143,17 @@ void PrintValuesOnSerial(void *parameters){
 
 void MotorRPMInitialize()
 {
-	pinMode(motorRPMPin, OUTPUT);
-	averageMailbox = xQueueCreate(1, sizeof(float));
+	pinMode(motorRPMRightPin, OUTPUT);
+	pinMode(motorRPMLeftPin, OUTPUT);
+
+	averageMailboxRight = xQueueCreate(1, sizeof(float));
+	averageMailboxLeft = xQueueCreate(1, sizeof(float));
+
 	sharedDataMutexHandle = xSemaphoreCreateMutex();
-	attachInterrupt(motorRPMPin, calculateFrequencyISR, RISING);
-	xTaskCreate(calculateAverageFrequency, "Calculate-Average", 860, NULL, 1, &calculateAverageFrequencyTaskHandle);
-	xTaskCreate(PrintValuesOnSerial, "Show-Display", 1024, NULL, 1, NULL);
+
+	attachInterrupt(motorRPMRightPin, calculateFrequencyRightISR, RISING);
+	attachInterrupt(motorRPMLeftPin, calculateFrequencyLeftISR, RISING);
+
+	xTaskCreate(calculateAverageFrequency, "Calculate-Average", 1010, NULL, 1, &calculateAverageFrequencyTaskHandle);
+	xTaskCreate(PrintValuesOnSerial, "Show-Display", 2030, NULL, 1, NULL);
 }
