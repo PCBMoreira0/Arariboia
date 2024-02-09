@@ -1,7 +1,7 @@
 #include <MotorRPM.h>
 
-constexpr int motorRPMLeftPin = GPIO_NUM_4;
-constexpr int motorRPMRightPin = GPIO_NUM_2;
+constexpr int motorRPMLeftPin = GPIO_NUM_25;
+constexpr int motorRPMRightPin = GPIO_NUM_26;
 
 
 // Variables modified by ISR
@@ -155,5 +155,5 @@ void MotorRPMInitialize()
 	attachInterrupt(motorRPMLeftPin, calculateFrequencyLeftISR, RISING);
 
 	xTaskCreate(calculateAverageFrequency, "Calculate-Average", 1010, NULL, 1, &calculateAverageFrequencyTaskHandle);
-	xTaskCreate(PrintValuesOnSerial, "Show-Display", 2030, NULL, 1, NULL);
+	//xTaskCreate(PrintValuesOnSerial, "Show-Display", 2030, NULL, 1, NULL);
 }

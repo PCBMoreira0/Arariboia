@@ -1,4 +1,4 @@
-#include <displayUi.h>
+#include <DisplaySetup.h>
 
 /*Don't forget to set Sketchbook location in File/Preferencesto the path of your UI project (the parent foder of this INO file)*/
 

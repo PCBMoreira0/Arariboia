@@ -1,16 +1,20 @@
 #include <Arduino.h>
-#include <freertos\FreeRTOS.h>
 #include <MotorRPM.h>
+#include <DisplaySetup.h>
+#include <DisplayUpdate.h>
+
+// Debug
 #include <debugMotor.h>
 
 void setup()
 {
 	Serial.begin(115200);
-	vTaskDelay(pdMS_TO_TICKS(1000));
-	Serial.printf("\n--- INITIALIZING MOTOR RPM ---\n");
-	MotorRPMInitialize();
+	DisplayInit();
 
+	MotorRPMInitialize();
 	DebugMotorInit();
+
+	DisplayUpdateInit();
 }
 
 void loop()
