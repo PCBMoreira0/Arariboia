@@ -143,8 +143,8 @@ void PrintValuesOnSerial(void *parameters){
 
 void MotorRPMInitialize()
 {
-	pinMode(motorRPMRightPin, OUTPUT);
-	pinMode(motorRPMLeftPin, OUTPUT);
+	pinMode(motorRPMRightPin, INPUT);
+	pinMode(motorRPMLeftPin, INPUT);
 
 	averageMailboxRight = xQueueCreate(1, sizeof(float));
 	averageMailboxLeft = xQueueCreate(1, sizeof(float));
