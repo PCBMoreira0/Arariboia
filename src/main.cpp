@@ -4,7 +4,7 @@
 #include <DisplayUpdate.h>
 
 // Debug
-#include <debugMotor.h>
+// #include <debugMotor.h>
 
 void setup()
 {
@@ -12,7 +12,7 @@ void setup()
 	DisplayInit();
 
 	MotorRPMInitialize();
-	DebugMotorInit();
+	// DebugMotorInit();
 
 	DisplayUpdateInit();
 }

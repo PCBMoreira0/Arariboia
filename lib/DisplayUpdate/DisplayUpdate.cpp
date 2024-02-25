@@ -1,6 +1,8 @@
 #include <DisplayUpdate.h>
 
 void DisplayUpdate(void *parameters){
+	constexpr int updateDelay_ms = 150;
+
 	while(1){
 
 		// Motor RPM
@@ -31,7 +33,7 @@ void DisplayUpdate(void *parameters){
 			xSemaphoreGive(lv_mutex);
 		}
 
-		vTaskDelay(pdMS_TO_TICKS(500));
+		vTaskDelay(pdMS_TO_TICKS(updateDelay_ms));
 	}
 
 	vTaskDelete(NULL);
