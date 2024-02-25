@@ -2,6 +2,7 @@
 
 void DisplayUpdate(void *parameters){
 	constexpr int updateDelay_ms = 150;
+	constexpr int warningThreshold_rpm = 50;
 
 	while(1){
 
@@ -17,7 +18,7 @@ void DisplayUpdate(void *parameters){
 			std::string rpmLeftString = std::to_string(rpmLeft);
 
 			bool warningActivate = false;
-        	if(abs(rpmRight - rpmLeft) > 50){
+        	if(abs(rpmRight - rpmLeft) > warningThreshold_rpm){
             	warningActivate = true;
         	}
 
