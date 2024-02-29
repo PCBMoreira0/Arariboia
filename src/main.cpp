@@ -14,7 +14,7 @@ void setup()
 	MotorRPMInitialize();
 	// DebugMotorInit();
 
-	DisplayUpdateInit();
+	// DisplayUpdateInit();
 }
 
 void loop()
