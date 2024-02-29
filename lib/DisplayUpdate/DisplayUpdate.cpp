@@ -14,17 +14,18 @@ void DisplayUpdate(void *parameters){
 		{
 			int rpmRight = frequencyToRPM(frequencyRight);
 			int rpmLeft = frequencyToRPM(frequencyLeft);
-			std::string rpmRightString = std::to_string(rpmRight);
-			std::string rpmLeftString = std::to_string(rpmLeft);
-
+			char* rpmRightString;
+			char* rpmLeftString;
+			sprintf("%d", rpmRightString);
+			sprintf("%d", rpmLeftString);
 			bool warningActivate = false;
         	if(abs(rpmRight - rpmLeft) > warningThreshold_rpm){
             	warningActivate = true;
         	}
 
 			xSemaphoreTake(lv_mutex, portMAX_DELAY);
-			lv_label_set_text(ui_RPM_L, rpmLeftString.c_str());
-			lv_label_set_text(ui_RPM_R, rpmRightString.c_str());
+			lv_label_set_text(ui_RPM_L, rpmLeftString);
+			lv_label_set_text(ui_RPM_R, rpmRightString);
 			if(warningActivate && lv_obj_has_flag(ui_RPM_Warning, LV_OBJ_FLAG_HIDDEN)){
 			 	lv_obj_clear_flag(ui_RPM_Warning, LV_OBJ_FLAG_HIDDEN);
 			}

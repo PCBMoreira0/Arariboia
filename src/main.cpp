@@ -9,12 +9,12 @@
 void setup()
 {
 	Serial.begin(115200);
-	DisplayInit();
+	// DisplayInit();
 
 	MotorRPMInitialize();
 	// DebugMotorInit();
 
-	DisplayUpdateInit();
+	// DisplayUpdateInit();
 }
 
 void loop()

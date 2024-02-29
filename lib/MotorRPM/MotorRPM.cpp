@@ -31,6 +31,12 @@ float frequencyToRPM(float signalFrequency){
 	return angularCoefficient * signalFrequency + linearCoefficient;
 }
 
+float errorMarginCorrect(float wrongFrequency){
+	constexpr float errorMargin = 5.2f;
+
+	return wrongFrequency / errorMargin;
+}
+
 IRAM_ATTR void calculateFrequencyRightISR(){
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -43,7 +49,7 @@ IRAM_ATTR void calculateFrequencyRightISR(){
 
 	xSemaphoreGiveFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
 
-	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR();
 }
 
 IRAM_ATTR void calculateFrequencyLeftISR(){
@@ -58,7 +64,7 @@ IRAM_ATTR void calculateFrequencyLeftISR(){
 
 	xSemaphoreGiveFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
 
-	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR();
 }
 
 void calculateAverageFrequency(void *parameters){
@@ -97,6 +103,9 @@ void calculateAverageFrequency(void *parameters){
 		}else{
 			frequencyLeft = 1 / (periodLeft / 1000000);
 		}
+
+		frequencyRight = errorMarginCorrect(frequencyRight);
+		frequencyLeft = errorMarginCorrect(frequencyLeft);
 
 		xQueueSend(averageMailboxRight, (void *)&frequencyRight, portMAX_DELAY);
 		xQueueSend(averageMailboxLeft, (void *)&frequencyLeft, portMAX_DELAY);
@@ -155,5 +164,5 @@ void MotorRPMInitialize()
 	attachInterrupt(motorRPMLeftPin, calculateFrequencyLeftISR, RISING);
 
 	xTaskCreate(calculateAverageFrequency, "Calculate-Average", 1010, NULL, 1, &calculateAverageFrequencyTaskHandle);
-	//xTaskCreate(PrintValuesOnSerial, "Show-Display", 2030, NULL, 1, NULL);
+	xTaskCreate(PrintValuesOnSerial, "Show-Display", 2030, NULL, 1, NULL);
 }
