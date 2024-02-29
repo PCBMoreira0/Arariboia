@@ -3,7 +3,7 @@
 #include <SPI.h>
 #include <lvgl.h>
 #include <ui.h>
-#include <freertos\FreeRTOS.h>
+#include <freertos/FreeRTOS.h>
 
 extern SemaphoreHandle_t lv_mutex;
 
