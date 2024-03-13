@@ -23,9 +23,9 @@ void debugTask(void *parameters){
         sprintf(Current, "%d", randomNumber);
         
         bool warningActivate = false;
-        if(abs(std::stoi(RPM_L) - std::stoi(RPM_R)) > 250){
+        /*if(abs(std::stoi(RPM_L) - std::stoi(RPM_R)) > 250){
             warningActivate = true;
-        }
+        }*/
 
         xSemaphoreTake(lv_mutex, portMAX_DELAY);
         lv_label_set_text(ui_RPM_L, RPM_L);
