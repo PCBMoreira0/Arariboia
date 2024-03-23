@@ -3,7 +3,6 @@
 constexpr int motorRPMLeftPin = GPIO_NUM_25;
 constexpr int motorRPMRightPin = GPIO_NUM_26;
 
-
 // Variables modified by ISR
 // Right Motor
 volatile unsigned long lastTimeMeasuredRight;
@@ -22,37 +21,48 @@ QueueHandle_t averageMailboxLeft;
 TaskHandle_t calculateAverageFrequencyTaskHandle;
 SemaphoreHandle_t sharedDataMutexHandle;
 
-float frequencyToRPM(float signalFrequency){
+float frequencyToRPM(float signalFrequency)
+{
 	constexpr float angularCoefficient = 15.179f;
 	constexpr float linearCoefficient = -19.65f;
 
-	if(signalFrequency <= 0) return 0;
+	if (signalFrequency <= 0)
+		return 0;
 
 	return angularCoefficient * signalFrequency + linearCoefficient;
 }
 
-float errorMarginCorrect(float wrongFrequency){
+float errorMarginCorrect(float wrongFrequency)
+{
 	constexpr float errorMargin = 5.2f;
 
 	return wrongFrequency / errorMargin;
 }
 
-IRAM_ATTR void calculateFrequencyRightISR(){
+IRAM_ATTR void calculateFrequencyRightISR()
+{
+	constexpr int threshold = 500;
+
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-	unsigned long currentTime = micros();
-	xSemaphoreTakeFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
+	int analogValue = analogRead(motorRPMRightPin);
+	if (analogValue > threshold)
+	{
+		unsigned long currentTime = micros();
+		xSemaphoreTakeFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
 
-	totalTimeSumRight += currentTime - lastTimeMeasuredRight;
-	lastTimeMeasuredRight = currentTime;
-	totalMeasuresMadeRight++;
+		totalTimeSumRight += currentTime - lastTimeMeasuredRight;
+		lastTimeMeasuredRight = currentTime;
+		totalMeasuresMadeRight++;
 
-	xSemaphoreGiveFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
+		xSemaphoreGiveFromISR(sharedDataMutexHandle, &xHigherPriorityTaskWoken);
 
-	portYIELD_FROM_ISR();
+		portYIELD_FROM_ISR();
+	}
 }
 
-IRAM_ATTR void calculateFrequencyLeftISR(){
+IRAM_ATTR void calculateFrequencyLeftISR()
+{
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	unsigned long currentTime = micros();
@@ -67,7 +77,8 @@ IRAM_ATTR void calculateFrequencyLeftISR(){
 	portYIELD_FROM_ISR();
 }
 
-void calculateAverageFrequency(void *parameters){
+void calculateAverageFrequency(void *parameters)
+{
 	while (1)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -88,9 +99,12 @@ void calculateAverageFrequency(void *parameters){
 		float periodRight = (float)totalSumRight / totalMeasuresRight;
 		float frequencyRight;
 
-		if(isnan(periodRight)){
+		if (isnan(periodRight))
+		{
 			frequencyRight = 0;
-		}else{
+		}
+		else
+		{
 			frequencyRight = 1 / (periodRight / 1000000);
 		}
 
@@ -98,9 +112,12 @@ void calculateAverageFrequency(void *parameters){
 		float periodLeft = (float)totalSumLeft / totalMeasureLeft;
 		float frequencyLeft;
 
-		if(isnan(periodLeft)){
+		if (isnan(periodLeft))
+		{
 			frequencyLeft = 0;
-		}else{
+		}
+		else
+		{
 			frequencyLeft = 1 / (periodLeft / 1000000);
 		}
 
@@ -114,7 +131,8 @@ void calculateAverageFrequency(void *parameters){
 	vTaskDelete(NULL);
 }
 
-void PrintValuesOnSerial(void *parameters){
+void PrintValuesOnSerial(void *parameters)
+{
 	constexpr int printDelay_ms = 500;
 
 	while (1)
