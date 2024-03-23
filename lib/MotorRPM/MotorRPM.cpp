@@ -23,8 +23,8 @@ SemaphoreHandle_t sharedDataMutexHandle;
 
 float frequencyToRPM(float signalFrequency)
 {
-	constexpr float angularCoefficient = 15.179f;
-	constexpr float linearCoefficient = -19.65f;
+	constexpr float angularCoefficient = 31.0974029f;
+	constexpr float linearCoefficient = -37.8278051f;
 
 	if (signalFrequency <= 0)
 		return 0;
@@ -34,9 +34,10 @@ float frequencyToRPM(float signalFrequency)
 
 float errorMarginCorrect(float wrongFrequency)
 {
-	constexpr float errorMargin = 5.2f;
+	constexpr float angularCoefficient = 0.071789;
+	constexpr float linearCoefficient = -3.391956;
 
-	return wrongFrequency / errorMargin;
+	return angularCoefficient * wrongFrequency + linearCoefficient;
 }
 
 IRAM_ATTR void calculateFrequencyRightISR()
